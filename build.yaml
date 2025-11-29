@@ -1,0 +1,44 @@
+name: build-site
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install libvips (for sharp)
+        run: sudo apt-get update && sudo apt-get install -y libvips-dev
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build site
+        run: npm run build
+
+      - name: Show build output (debug)
+        run: |
+          if [ -d dist ]; then
+            echo "dist/ contents:"
+            ls -la dist
+          else
+            echo "No dist/ found; listing repo root:"
+            ls -la
+          fi
+
+      - name: Upload built site artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: iris-docs-dist
+          path: dist
